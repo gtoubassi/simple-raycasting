@@ -22,6 +22,7 @@ public class Main extends JPanel implements ActionListener {
     float[] distances = new float[320];
     boolean upPressed, downPressed, leftPressed, rightPressed;
     private Timer timer;
+    private float[] rayCastAngles = new float[320];
 
     public Main() {
         image = new BufferedImage(320, 200, BufferedImage.TYPE_INT_RGB);
@@ -30,55 +31,106 @@ public class Main extends JPanel implements ActionListener {
         raster.setPixels(0, 0, 320, 200, pixels);
 
         map = new Map();
-        playerX = map.getWidth() / 2;
-        playerY = map.getHeight() / 2;
-        playerOrientation = (float)Math.PI/4f;
+        playerX = 50;//95;//map.getWidth() / 2;
+        playerY = 5;//map.getHeight() / 2;
+        playerOrientation = (float)Math.PI/16f;
+        computeRayCastAngles();
     }
 
-    public void render() {
-        // assume 100degree viewing angle
-        float viewingAngle = (float)(60 * Math.PI / 180f);
-        float startAngle = playerOrientation - viewingAngle/2;
-        float endAngle = playerOrientation + viewingAngle/2;
+    private void computeRayCastAngles() {
+        float viewingAngle = (float)(100 /*degrees*/ * Math.PI / 180f);
 
-        int ray = 0;
-        for (float angle = startAngle; angle < endAngle && ray < 320; angle += viewingAngle / 320f, ray++) {
-            float rise = (float)Math.sin(angle);
-            float run = (float)Math.cos(angle);
-            float dx, dy;
+        if (false) {
+            float delta = (float) (Math.tan(viewingAngle / 2) / 160);
 
-            if (Math.abs(rise) > Math.abs(run)) {
-                dy = 1;
-                dx = run / rise;
+            float d = 0;
+            for (int ray = 0; ray < 160; ray++, d += delta) {
+                float angle = (float) Math.atan(d);
+                rayCastAngles[160 - ray - 1] = angle;
+                rayCastAngles[160 + ray] = -angle;
             }
-            else {
-                dx = 1;
-                dy = rise / run;
+        }
+        else {
+            float deltaAngle = (viewingAngle / 2f) / 160f;
+            float angle = 0;
+            for (int ray = 0; ray < 160; ray++, angle += deltaAngle) {
+                rayCastAngles[160 - ray - 1] = angle;
+                rayCastAngles[160 + ray] = -angle;
             }
-
-            // cast the ray!
-            float x = playerX;
-            float y = playerY;
-
-            int i = 0;
-            for (; i < 10000; i++) {
-                if (map.isWall((int)x, (int)y)) {
-                    break;
-                }
-                x += dx;
-                y += dy;
-            }
-
-            distances[ray] = (float)(i * Math.sqrt(dx*dx + dy*dy));
         }
 
-        //for (int i = 0; i < distances.length;i++) {
-        //    System.out.println(distances[i]);
+        //for (int i = 1; i < rayCastAngles.length; i++) {
+        //    System.out.println(i + " " + rayCastAngles[i] + " delta " + (rayCastAngles[i] - rayCastAngles[i-1]));
         //}
+        //System.exit(0);
+    }
 
+    public float traceDistanceForAngle(float angle) {
+        float rise = (float)Math.sin(angle);
+        float run = (float)Math.cos(angle);
+        float dx, dy;
+
+        if (rise >= 0) {
+            if (run >= 0) {
+                if (rise > run) {
+                    dy = 1;
+                    dx = run / rise;
+                } else {
+                    dx = 1;
+                    dy = rise / run;
+                }
+            }
+            else {
+                if (rise > -run) {
+                    dy = 1;
+                    dx = run / rise;
+                } else {
+                    dx = -1;
+                    dy = -rise / run;
+                }
+            }
+        }
+        else {
+            if (run >= 0) {
+                if (-rise > run) {
+                    dy = -1;
+                    dx = run / -rise;
+                } else {
+                    dx = 1;
+                    dy = rise / run;
+                }
+            }
+            else {
+                if (-rise > -run) {
+                    dy = -1;
+                    dx = -run / rise;
+                } else {
+                    dx = -1;
+                    dy = -rise / run;
+                }
+            }
+        }
+
+        // cast the ray!
+        float x = playerX;
+        float y = playerY;
+
+        int i = 0;
+        for (; i < 100000; i++) {
+            if (map.isWall(x, y)) {
+                break;
+            }
+            x += dx;
+            y += dy;
+        }
+
+        return (float)(i * Math.sqrt(dx*dx + dy*dy));
+    }
+
+    public void paintScene(int grayLevel) {
         for (int x = 0; x < 320; x++) {
             int margin = (int)(200 * distances[x] / map.maxObservableDistance() / 2);
-            //System.out.println(x + " " + margin);
+            int adjustedGray = (int)(grayLevel * (map.maxObservableDistance() - distances[x]) / map.maxObservableDistance() / 1.1);
             int y = 0;
             for (; y < margin; y++) {
                 // set pixels to black
@@ -88,9 +140,9 @@ public class Main extends JPanel implements ActionListener {
             }
             for (; y < 200 - margin; y++) {
                 // set pixels to gray
-                pixels[3*(y * 320 + x) + 0] = 127;
-                pixels[3*(y * 320 + x) + 1] = 127;
-                pixels[3*(y * 320 + x) + 2] = 127;
+                pixels[3*(y * 320 + x) + 0] = adjustedGray;
+                pixels[3*(y * 320 + x) + 1] = adjustedGray;
+                pixels[3*(y * 320 + x) + 2] = adjustedGray;
             }
             for (; y < 200; y++) {
                 // set pixels to black
@@ -99,7 +151,20 @@ public class Main extends JPanel implements ActionListener {
                 pixels[3*(y * 320 + x) + 2] = 0;
             }
         }
+    }
 
+    public void render() {
+        for (int i = 0; i < 320; i++) {
+            float angle = rayCastAngles[i];
+            distances[i] = (float)Math.sin(Math.PI/2f - Math.abs(angle)) * traceDistanceForAngle(playerOrientation + angle);
+        }
+
+        //for (int i = 0; i < distances.length; i++) {
+        //    System.out.println(i + " " + distances[i]);
+        //}
+        //System.exit(0);
+
+        paintScene(127);
     }
 
     @Override
@@ -134,15 +199,17 @@ public class Main extends JPanel implements ActionListener {
         strategy.show();
 
         if (leftPressed) {
-            playerOrientation -= 1.5/180f * Math.PI;
+            playerOrientation += 1.5/180f * Math.PI;
+            playerOrientation = playerOrientation % ((float)(2*Math.PI));
         }
         if (rightPressed) {
-            playerOrientation += 1.5/180f * Math.PI;
+            playerOrientation -= 1.5/180f * Math.PI;
+            playerOrientation = playerOrientation % ((float)(2*Math.PI));
         }
         if (upPressed) {
             float newX = playerX + (float)Math.cos(playerOrientation);
             float newY = playerY + (float)Math.sin(playerOrientation);
-            if (!map.isWall((int)newX, (int)newY)) {
+            if (!map.isWall(newX, newY)) {
                 playerX = newX;
                 playerY = newY;
             }
@@ -150,10 +217,13 @@ public class Main extends JPanel implements ActionListener {
         if (downPressed) {
             float newX = playerX - (float)Math.cos(playerOrientation);
             float newY = playerY - (float)Math.sin(playerOrientation);
-            if (!map.isWall((int)newX, (int)newY)) {
+            if (!map.isWall(newX, newY)) {
                 playerX = newX;
                 playerY = newY;
             }
+        }
+        if (leftPressed || rightPressed || upPressed || downPressed) {
+            System.out.println(playerX + "," + playerY + "  " + playerOrientation * 180/Math.PI + "°");
         }
     }
 
@@ -177,7 +247,7 @@ public class Main extends JPanel implements ActionListener {
         this.strategy = container.getBufferStrategy();
         addKeyListener(new KeyInputHandler());
         this.requestFocus();
-        timer = new Timer(5, this);
+        timer = new Timer(10, this);
         timer.start();
     }
 

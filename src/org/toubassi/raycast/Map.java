@@ -16,8 +16,8 @@ public class Map {
 
     }
 
-    public boolean isWall(int x, int y) {
-        return data[x][y] == 1;
+    public boolean isWall(float x, float y) {
+        return data[(int)x][(int)y] == 1;
     }
 
     public int getWidth() {
