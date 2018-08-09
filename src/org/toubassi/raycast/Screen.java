@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
+import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
 /**
@@ -16,8 +16,7 @@ public class Screen {
 
     private BufferStrategy strategy;
     private BufferedImage image;
-    private WritableRaster raster;
-    public int[] vram = new int[WIDTH * HEIGHT * 3];
+    public int[] vram;
 
     public Screen(JFrame container) {
         container.createBufferStrategy(2);
@@ -25,9 +24,9 @@ public class Screen {
         vram = new int[Screen.WIDTH*Screen.HEIGHT*3];
 
         image = new BufferedImage(Screen.WIDTH, Screen.HEIGHT, BufferedImage.TYPE_INT_RGB);
-        raster = image.getRaster();
-
-        raster.setPixels(0, 0, Screen.WIDTH, Screen.HEIGHT, vram);
+        DataBufferInt dataBuffer = (DataBufferInt)image.getRaster().getDataBuffer();
+        vram = dataBuffer.getData();
+        Arrays.fill(vram, 0);
     }
 
     public void zeroFill() {
@@ -35,7 +34,6 @@ public class Screen {
     }
 
     public void flush() {
-        raster.setPixels(0, 0, 320, 200, vram);
         Graphics2D g = (Graphics2D) strategy.getDrawGraphics();
         g.drawImage(image, 0, 0, null);
 

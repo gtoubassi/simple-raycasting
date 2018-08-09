@@ -16,6 +16,8 @@ public class Main extends JPanel implements ActionListener {
     private float[] rayCastAngles = new float[Screen.WIDTH];
     private float[] cosineRayCastAngles = new float[Screen.WIDTH];
     private long tickCount = 0;
+    private long accumulatedRenderNanoTime = 0;
+    private long startFrameTime = 0;
 
     public Main() {
         map = new Map();
@@ -103,18 +105,18 @@ public class Main extends JPanel implements ActionListener {
     // see http://www.cokeandcode.com/info/tut2d.html
     // https://lodev.org/cgtutor/raycasting.html
     public void gameLoop() {
+        if (startFrameTime == 0) {
+            startFrameTime = System.currentTimeMillis();
+        }
         tickCount++;
 
-        if (tickCount % 5 == 0) {
-            // Even though I don't think we generate any garbage during render
-            // to get clean timing we perform GC outside of the render.  This
-            // improves the measured (though not actual) fps quite a bit
-            // and gives a better estimate of the actual cpu cost of render.
-            System.gc();
-        }
+        // To get cleaner render fps lets get GC out of the way.
+        // at the large expense of actual fps.
+        System.gc();
+
         long start = System.nanoTime();
 
-        // Perform raycasting and render to vram
+        // Perform ray casting and render to vram
         float playerOrientation = player.getOrientation();
         int[] vram = screen.vram;
 
@@ -125,17 +127,23 @@ public class Main extends JPanel implements ActionListener {
             float distance = cosineRayCastAngles[x] * traceDistanceForAngle(player.x, player.y, playerOrientation + angle);
 
             int margin = Math.max(0, (int)(Screen.HEIGHT - Screen.HEIGHT / (.05*distance)) / 2);
-            int adjustedGray = (int)(127 * (Math.max(0, 150 - distance)) / 150 / 1.1);
+            int gray = 0xff & (int)(127 * (Math.max(0, 150 - distance)) / 150 / 1.1);
+            int pixelRGB =gray << 16 | gray << 8 | gray;
+
             for (int y = margin; y < Screen.HEIGHT - margin; y++) {
-                vram[3*(y * Screen.WIDTH + x)] = adjustedGray;
-                vram[3*(y * Screen.WIDTH + x) + 1] = adjustedGray;
-                vram[3*(y * Screen.WIDTH + x) + 2] = adjustedGray;
+                vram[y * Screen.WIDTH + x] = pixelRGB;
             }
         }
 
-        if (tickCount % 100 == 0) {
-            long duration = System.nanoTime() - start;
-            System.out.println((1d/duration * 1e9) + " fps (" + duration +"ns)");
+        accumulatedRenderNanoTime += System.nanoTime() - start;
+        final int ticksPerLog = 100;
+        if (tickCount % ticksPerLog == 0) {
+            long nanosPerFrame = accumulatedRenderNanoTime / ticksPerLog;
+            double renderFPS = (1d/nanosPerFrame * 1e9);
+            double totalFPS = 1d / ((System.currentTimeMillis() - startFrameTime) / ticksPerLog) * 1e3;
+            System.out.printf("%g render fps (%dns)   %f perceived fps\n", renderFPS, nanosPerFrame, totalFPS);
+            accumulatedRenderNanoTime = 0;
+            startFrameTime = System.currentTimeMillis();
         }
 
         screen.flush();
@@ -178,7 +186,7 @@ public class Main extends JPanel implements ActionListener {
         screen = new Screen(container);
         addKeyListener(new KeyInputHandler());
         this.requestFocus();
-        Timer timer = new Timer(10, this);
+        Timer timer = new Timer(5, this);
         timer.start();
     }
 

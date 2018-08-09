@@ -4,15 +4,16 @@ package org.toubassi.raycast;
  * Created by gtoubassi on 8/7/18.
  */
 public class Map {
-    byte[][] data = new byte[100][100];
+    byte[][] data;
 
     public Map() {
 
-        for (int x = 0; x < getWidth(); x++) {
-            for (int y = 0; y < getHeight(); y++) {
-                data[x][y] = (byte)(x < 3 || x > 96 || y < 3 || y > 96 ? 1 : 0);
-            }
-        }
+        data = new byte[200][100];
+        fillRect(0, 0, 200, 100, 1);
+        fillRect(3, 3, 94, 94, 0);
+        fillRect(103, 3, 94, 94, 0);
+        fillRect(91, 75, 20, 22, 0);
+        fillRect(91, 3, 20, 22, 0);
     }
 
     public boolean isWall(float x, float y) {
@@ -25,5 +26,13 @@ public class Map {
 
     public int getHeight() {
         return 100;
+    }
+
+    private void fillRect(int x, int y, int width, int height, int value) {
+        for (int i = x; i < x + width; i++) {
+            for (int j = y; j < y + height; j++) {
+                data[i][j] = (byte)value;
+            }
+        }
     }
 }
