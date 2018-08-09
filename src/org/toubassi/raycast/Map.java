@@ -13,7 +13,6 @@ public class Map {
                 data[x][y] = (byte)(x < 3 || x > 96 || y < 3 || y > 96 ? 1 : 0);
             }
         }
-
     }
 
     public boolean isWall(float x, float y) {
@@ -26,9 +25,5 @@ public class Map {
 
     public int getHeight() {
         return 100;
-    }
-
-    public int maxObservableDistance() {
-        return 142;
     }
 }
