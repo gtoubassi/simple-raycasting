@@ -102,8 +102,6 @@ public class Main extends JPanel implements ActionListener {
         return (float)(i * Math.sqrt(dx*dx + dy*dy));
     }
 
-    // see http://www.cokeandcode.com/info/tut2d.html
-    // https://lodev.org/cgtutor/raycasting.html
     public void gameLoop() {
         if (startFrameTime == 0) {
             startFrameTime = System.currentTimeMillis();

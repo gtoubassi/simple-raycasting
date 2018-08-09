@@ -17,9 +17,11 @@ public class Screen {
     private BufferStrategy strategy;
     private BufferedImage image;
     public int[] vram;
+    private int contentXOffset, contentYOffset;
 
     public Screen(JFrame container) {
         container.createBufferStrategy(2);
+
         this.strategy = container.getBufferStrategy();
         vram = new int[Screen.WIDTH*Screen.HEIGHT*3];
 
@@ -27,6 +29,11 @@ public class Screen {
         DataBufferInt dataBuffer = (DataBufferInt)image.getRaster().getDataBuffer();
         vram = dataBuffer.getData();
         Arrays.fill(vram, 0);
+
+        contentXOffset = container.getWidth() - WIDTH;
+        contentYOffset = container.getHeight() - HEIGHT;
+
+
     }
 
     public void zeroFill() {
@@ -35,6 +42,7 @@ public class Screen {
 
     public void flush() {
         Graphics2D g = (Graphics2D) strategy.getDrawGraphics();
+        g.translate(contentXOffset, contentYOffset);
         g.drawImage(image, 0, 0, null);
 
         // finally, we've completed drawing so clear up the graphics
