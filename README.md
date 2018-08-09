@@ -3,6 +3,9 @@
 This repo represents a simple, Java based ray casting implementation similar
 to those used in early "3D" games like Wolfenstein 3D.
 
+
+![raycasting recording](https://raw.githubusercontent.com/gtoubassi/simple-raycasting/blob/master/raycastdemo.gif)
+
 ### Speed
 
 Being in Java is a bit silly but it turns out the actual ray casting is still
@@ -14,22 +17,26 @@ I do have a huge tax in Java due to garbage collection though given that the
 ray caster doesn't actually turn over garbage I assume by choosing the right
 GC algorithm maybe this can be resolved.  In order to get clean measurements
 on the actual ray tracing I run GC on every tick before going into the loop
-to ensure no GC disturbs the ray tracing.
+to ensure no GC disturbs the ray casting.
 
 I also have some tax (not quantified) to update the display.  In a real game
 you'd get closer to direct vram access.  I'm doing the best I could find
-on Java.
+with Java.
 
 ### Fisheye Distortion
 
-I had two causes of distortion in my initial implementation.  The first is
+I had three causes of distortion in my initial implementation.  The first is
 that as you sweep through the "field of view" angles, 1 per vertical "strip"
 of the display, I was sweeping with a fixed angle, but that means the
-plane of the camera was actually being samples in a non uniform way.  Really
+plane of the camera was actually being sampled in a non uniform way.  Really
 you want to sample at non uniform angles such that you intersect the camera
-plane in uniform intersects.  Thats the cause of the Math.atan call.
+plane in uniform intersects.  That's the cause of the Math.atan call.
 
-The bigger distortion I had was dumb.  When I got the distance for a given
+The second cause of distortion was that you want to take the distance not
+from the viewpoint of the camera, but to the plane of the camera.  This
+is the cause of the cosine adjustment after the ray distance is traced.
+
+The third distortion I had was dumb.  When I got the distance for a given
 strip, I just took that distance, divided by two, and used that as the
 margin at the top and bottom of the scan line.  For example if a strip was
 20 pixels away, I'd draw the vertical line for the wall with a margin at
