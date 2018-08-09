@@ -1,6 +1,5 @@
 package org.toubassi.raycast;
 
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;

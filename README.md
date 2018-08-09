@@ -55,6 +55,31 @@ detect an intersection "late".  Thus when you get close to the wall you can
 see some jaggies at the top and bottom.  I really should be marching the ray
 and calculating intersections at both the vertical and horizontal grid lines.
 
+### Ideas
+
+It occurs to me that really for many simple maps there is no reason to cast
+all rays, but instead find two vertical strips (hopefully far apart on screen)
+that hit the same wall, and if so you can do linear interpolation on all
+intermediate strips.  For example the map could identify each wall with a
+unique identifier and return that from the hit testing (Map.isWall).
+
+So consider the simple case where the user is looking at a single wall that
+covers the entire field of view.  Do the ray casting on the left most strip
+and find the distance.  Do it on the right most strip, find the distance, and
+do linear interpolation in between.  If the wall IDs don't match bisect
+and try again.  This would only work if you can make the assumption that if
+wall X is hit at strip 0 (far left), and wall X is hit at strip 319 (far
+right), then no other obstruction (say a freestanding cube) is occluding view
+in between.
+
+This could lead to a further optimization which could allow you to avoid the
+vertical rendering of strips, which due to the Screen.WIDTH stride means you
+have potentially worse cache behavior.  In other words you'd rather paint the
+screen in memory order (left to right, top to bottom) vs a vertical line at
+a time.  You'd take the wall boundaries found in the bisection pass and turn
+it into a list of trapezoids to be renders.  A single visible wall would be
+a single trapezoid which can then be rendered right to left.  If you are
+looking at a corner it would be two trapezoids.
 
 ### References
 
