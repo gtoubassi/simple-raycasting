@@ -23,6 +23,7 @@ public class Main extends JPanel implements ActionListener {
     boolean upPressed, downPressed, leftPressed, rightPressed;
     private Timer timer;
     private float[] rayCastAngles = new float[320];
+    private long tickCount = 0;
 
     public Main() {
         image = new BufferedImage(320, 200, BufferedImage.TYPE_INT_RGB);
@@ -31,16 +32,16 @@ public class Main extends JPanel implements ActionListener {
         raster.setPixels(0, 0, 320, 200, pixels);
 
         map = new Map();
-        playerX = 50;//95;//map.getWidth() / 2;
-        playerY = 5;//map.getHeight() / 2;
-        playerOrientation = (float)Math.PI/16f;
+        playerX = map.getWidth() / 2;
+        playerY = map.getHeight() / 2;
+        playerOrientation = (float)Math.PI/4;
         computeRayCastAngles();
     }
 
     private void computeRayCastAngles() {
         float viewingAngle = (float)(100 /*degrees*/ * Math.PI / 180f);
 
-        if (false) {
+        if (true) {
             float delta = (float) (Math.tan(viewingAngle / 2) / 160);
 
             float d = 0;
@@ -129,7 +130,8 @@ public class Main extends JPanel implements ActionListener {
 
     public void paintScene(int grayLevel) {
         for (int x = 0; x < 320; x++) {
-            int margin = (int)(200 * distances[x] / map.maxObservableDistance() / 2);
+            int margin = Math.max(0, (int)(200 - 200 / (.05*distances[x])) / 2);
+            //int margin = (int)(200 * distances[x] / map.maxObservableDistance() / 2);
             int adjustedGray = (int)(grayLevel * (map.maxObservableDistance() - distances[x]) / map.maxObservableDistance() / 1.1);
             int y = 0;
             for (; y < margin; y++) {
@@ -159,11 +161,6 @@ public class Main extends JPanel implements ActionListener {
             distances[i] = (float)Math.sin(Math.PI/2f - Math.abs(angle)) * traceDistanceForAngle(playerOrientation + angle);
         }
 
-        //for (int i = 0; i < distances.length; i++) {
-        //    System.out.println(i + " " + distances[i]);
-        //}
-        //System.exit(0);
-
         paintScene(127);
     }
 
@@ -174,23 +171,19 @@ public class Main extends JPanel implements ActionListener {
 
 
     // see http://www.cokeandcode.com/info/tut2d.html
+    // https://lodev.org/cgtutor/raycasting.html
     public void gameLoop() {
         // Get hold of a graphics context for the accelerated
         // surface and blank it out
         Graphics2D g = (Graphics2D) strategy.getDrawGraphics();
-        if (true) {
-            render();
-            raster.setPixels(0, 0, 320, 200, pixels);
-            g.drawImage(image, 0, 0, null);
-        }
-        else {
-            for (int i = 0; i < pixels.length; i += 3) {
-                pixels[i] = 255;
-                pixels[i+1] = 0;
-                pixels[i+2] = 0;
-            }
-            raster.setPixels(0, 0, 320, 200, pixels);
-            g.drawImage(image, 0, 0, null);
+        tickCount++;
+        long start = System.nanoTime();
+        render();
+        long duration = System.nanoTime() - start;
+        raster.setPixels(0, 0, 320, 200, pixels);
+        g.drawImage(image, 0, 0, null);
+        if (tickCount % 100 == 0) {
+            System.out.println((1d/duration * 1e9) + " fps (" + duration +"ns)");
         }
 
         // finally, we've completed drawing so clear up the graphics
@@ -222,9 +215,9 @@ public class Main extends JPanel implements ActionListener {
                 playerY = newY;
             }
         }
-        if (leftPressed || rightPressed || upPressed || downPressed) {
-            System.out.println(playerX + "," + playerY + "  " + playerOrientation * 180/Math.PI + "°");
-        }
+        //if (leftPressed || rightPressed || upPressed || downPressed) {
+        //    System.out.println(playerX + "," + playerY + "  " + playerOrientation * 180/Math.PI + "°");
+        //}
     }
 
     public void createAndShowGUI() {
@@ -276,7 +269,6 @@ public class Main extends JPanel implements ActionListener {
                 downPressed = true;
             }
         }
-
 
         public void keyReleased(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_LEFT) {
