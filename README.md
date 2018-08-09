@@ -4,7 +4,7 @@ This repo represents a simple, Java based ray casting implementation similar
 to those used in early "3D" games like Wolfenstein 3D.
 
 
-![raycasting recording](https://raw.githubusercontent.com/gtoubassi/simple-raycasting/blob/master/raycastdemo.gif)
+![raycasting recording](https://github.com/gtoubassi/simple-raycasting/blob/master/raycastdemo.gif?raw=true)
 
 ### Speed
 
