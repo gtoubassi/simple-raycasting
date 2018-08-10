@@ -16,7 +16,7 @@ This easily should have been able to run 60 fps on hardware of that era
 I do have a huge tax in Java due to garbage collection though given that the
 ray caster doesn't actually turn over garbage I assume by choosing the right
 GC algorithm maybe this can be resolved.  In order to get clean measurements
-on the actual ray tracing I run GC on every tick before going into the loop
+on the actual ray casting I run GC on every tick before going into the loop
 to ensure no GC disturbs the ray casting.
 
 I also have some tax (not quantified) to update the display.  In a real game
@@ -34,7 +34,7 @@ plane in uniform intersects.  That's the cause of the Math.atan call.
 
 The second cause of distortion was that you want to take the distance not
 from the viewpoint of the camera, but to the plane of the camera.  This
-is the cause of the cosine adjustment after the ray distance is traced.
+is the cause of the cosine adjustment after the ray distance is computed.
 
 The third distortion I had was dumb.  When I got the distance for a given
 strip, I just took that distance, divided by two, and used that as the

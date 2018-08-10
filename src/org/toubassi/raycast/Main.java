@@ -42,7 +42,7 @@ public class Main extends JPanel implements ActionListener {
         }
     }
 
-    public float traceDistanceForAngle(float x, float y, float angle) {
+    public float castRayForAngle(float startX, float startY, float angle) {
         float rise = (float)Math.sin(angle);
         float run = (float)Math.cos(angle);
         float dx, dy;
@@ -89,6 +89,8 @@ public class Main extends JPanel implements ActionListener {
         }
 
         // cast the ray!
+        float x = startX;
+        float y = startY;
         int i = 0;
         for (; i < 100000; i++) {
             if (map.isWall(x, y)) {
@@ -114,14 +116,13 @@ public class Main extends JPanel implements ActionListener {
         long start = System.nanoTime();
 
         // Perform ray casting and render to vram
-        float playerOrientation = player.getOrientation();
         int[] vram = screen.vram;
 
         screen.zeroFill();
 
         for (int x = 0; x < Screen.WIDTH; x++) {
             float angle = rayCastAngles[x];
-            float distance = cosineRayCastAngles[x] * traceDistanceForAngle(player.x, player.y, playerOrientation + angle);
+            float distance = cosineRayCastAngles[x] * castRayForAngle(player.x, player.y, player.getOrientation() + angle);
 
             int margin = Math.max(0, (int)(Screen.HEIGHT - Screen.HEIGHT / (.05*distance)) / 2);
             int gray = 0xff & (int)(127 * (Math.max(0, 150 - distance)) / 150 / 1.1);

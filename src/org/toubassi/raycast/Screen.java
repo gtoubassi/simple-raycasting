@@ -11,8 +11,8 @@ import java.util.Arrays;
  * Created by gtoubassi on 8/9/18.
  */
 public class Screen {
-    public static int WIDTH = 320;
-    public static int HEIGHT = 200;
+    public static final int WIDTH = 320;
+    public static final int HEIGHT = 200;
 
     private BufferStrategy strategy;
     private BufferedImage image;
