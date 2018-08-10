@@ -8,6 +8,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class Main extends JPanel implements ActionListener {
+    private static boolean USE_TEXTURE = true; // Toggle with the 'T' key
+
     private Screen screen;
     private Map map;
     private Player player;
@@ -17,11 +19,14 @@ public class Main extends JPanel implements ActionListener {
     private long tickCount = 0;
     private long accumulatedRenderNanoTime = 0;
     private long startFrameTime = 0;
+    private Texture texture;
+    private int[] textureTranslation = new int[1];
 
     public Main() {
         map = new Map();
-        player = new Player(map.getWidth() / 2, map.getHeight() / 2);
+        player = new Player(map.getWidth() / 2, map.getHeight() / 2 - 10);
         computeRayCastAngles();
+        texture = new Texture();
     }
 
     private void computeRayCastAngles() {
@@ -42,7 +47,7 @@ public class Main extends JPanel implements ActionListener {
         }
     }
 
-    public float castRayForAngle(float startX, float startY, float angle) {
+    public float castRayForAngle(float startX, float startY, float angle, int[] textureTranslation) {
         float rise = (float)Math.sin(angle);
         float run = (float)Math.cos(angle);
         float dx, dy;
@@ -92,13 +97,17 @@ public class Main extends JPanel implements ActionListener {
         float x = startX;
         float y = startY;
         int i = 0;
+        int wallTest = 0;
         for (; i < 100000; i++) {
-            if (map.isWall(x, y)) {
+            wallTest = map.isWall(x, y);
+            if (wallTest != -1) {
                 break;
             }
             x += dx;
             y += dy;
         }
+
+        textureTranslation[0] = wallTest;
 
         return (float)(i * Math.sqrt(dx*dx + dy*dy));
     }
@@ -122,14 +131,34 @@ public class Main extends JPanel implements ActionListener {
 
         for (int x = 0; x < Screen.WIDTH; x++) {
             float angle = rayCastAngles[x];
-            float distance = cosineRayCastAngles[x] * castRayForAngle(player.x, player.y, player.getOrientation() + angle);
+            float distance = cosineRayCastAngles[x] * castRayForAngle(player.x, player.y, player.getOrientation() + angle, textureTranslation);
+            float projectedHeight = (float)(Screen.HEIGHT - Screen.HEIGHT / (.05*distance));
 
-            int margin = Math.max(0, (int)(Screen.HEIGHT - Screen.HEIGHT / (.05*distance)) / 2);
-            int gray = 0xff & (int)(127 * (Math.max(0, 150 - distance)) / 150 / 1.1);
-            int pixelRGB =gray << 16 | gray << 8 | gray;
+            int margin = Math.max(0, (int)projectedHeight / 2);
+            float distanceDimmingFactor = Math.max(0, 150 - distance) / 150 / 1.1f;
 
-            for (int y = margin; y < Screen.HEIGHT - margin; y++) {
-                vram[y * Screen.WIDTH + x] = pixelRGB;
+            if (USE_TEXTURE) {
+                float textureY = 0;
+                int textureX = textureTranslation[0] * 2;
+                float textureYDelta = Screen.HEIGHT / (float)(Screen.HEIGHT - 2 * margin);
+
+                for (int y = margin; y < Screen.HEIGHT - margin; y++, textureY += textureYDelta) {
+                    int pixelRGB = texture.getRGB(textureX, (int)textureY);
+
+                    pixelRGB = 0xff & (int)((pixelRGB & 0xff) * distanceDimmingFactor) |
+                            (0xff & (int)(((pixelRGB & 0xff00) >> 8) * distanceDimmingFactor)) << 8 |
+                            (0xff & (int)(((pixelRGB & 0xff0000) >> 16) * distanceDimmingFactor)) << 16;
+
+                    vram[y * Screen.WIDTH + x] = pixelRGB;
+                }
+            }
+            else {
+                int gray = 0xff & (int)(127 * distanceDimmingFactor);
+                int pixelRGB =gray << 16 | gray << 8 | gray;
+
+                for (int y = margin; y < Screen.HEIGHT - margin; y++) {
+                    vram[y * Screen.WIDTH + x] = pixelRGB;
+                }
             }
         }
 
@@ -170,7 +199,6 @@ public class Main extends JPanel implements ActionListener {
         container.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         JPanel panel = (JPanel) container.getContentPane();
         panel.setPreferredSize(new Dimension(Screen.WIDTH, Screen.HEIGHT));
-        panel.setLayout(null);
 
         setBounds(0, 0, Screen.WIDTH, Screen.HEIGHT);
         panel.add(this);
@@ -211,6 +239,9 @@ public class Main extends JPanel implements ActionListener {
             }
             if (e.getKeyCode() == KeyEvent.VK_DOWN) {
                 downPressed = true;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_T) {
+                USE_TEXTURE = !USE_TEXTURE;
             }
         }
 

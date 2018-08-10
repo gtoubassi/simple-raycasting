@@ -1,38 +1,50 @@
 package org.toubassi.raycast;
 
+import java.util.Arrays;
+
 /**
  * Created by gtoubassi on 8/7/18.
  */
 public class Map {
-    byte[][] data;
+    private static final int WIDTH = 200;
+    private static final int HEIGHT = 100;
+
+    int[] data;
 
     public Map() {
 
-        data = new byte[200][100];
-        fillRect(0, 0, 200, 100, 1);
-        fillRect(3, 3, 94, 94, 0);
-        fillRect(103, 3, 94, 94, 0);
-        fillRect(91, 75, 20, 22, 0);
-        fillRect(91, 3, 20, 22, 0);
+        data = new int[WIDTH * HEIGHT];
+        Arrays.fill(data, -1);
+        frameWall(0, 0, WIDTH, HEIGHT);
+        frameWall(25, 25, 25, 25);
+        frameWall(150, 50, 25, 25);
     }
 
-    public boolean isWall(float x, float y) {
-        return data[(int)x][(int)y] == 1;
+    public int isWall(float x, float y) {
+        return data[((int)y) * WIDTH + ((int)x)];
     }
 
     public int getWidth() {
-        return 100;
+        return WIDTH;
     }
 
     public int getHeight() {
-        return 100;
+        return HEIGHT;
     }
 
-    private void fillRect(int x, int y, int width, int height, int value) {
-        for (int i = x; i < x + width; i++) {
-            for (int j = y; j < y + height; j++) {
-                data[i][j] = (byte)value;
-            }
+    private void frameWall(int rectX, int rectY, int width, int height) {
+        int textureOffset = 0;
+        for (int x = rectX; x < rectX + width; x++) {
+            data[rectY * WIDTH + x] = textureOffset++;
+        }
+        for (int y = rectY; y < rectY + height; y++) {
+            data[y * WIDTH + rectX + width - 1] = textureOffset++;
+        }
+        for (int x = rectX + width - 1; x >= rectX; x--) {
+            data[(rectY + height - 1) * WIDTH + x] = textureOffset++;
+        }
+        for (int y = rectY + height - 1; y >= rectY ; y--) {
+            data[y * WIDTH + rectX] = textureOffset++;
         }
     }
 }

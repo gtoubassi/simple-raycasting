@@ -48,7 +48,7 @@ public class Player {
     public void moveForward(Map map) {
         float newX = x + getCosineOrientation();
         float newY = y + getSineOrientation();
-        if (!map.isWall(newX, newY)) {
+        if (map.isWall(newX, newY) == -1) {
             x = newX;
             y = newY;
         }
@@ -57,7 +57,7 @@ public class Player {
     public void moveBackward(Map map) {
         float newX = x - getCosineOrientation();
         float newY = y - getSineOrientation();
-        if (!map.isWall(newX, newY)) {
+        if (map.isWall(newX, newY) == -1) {
             x = newX;
             y = newY;
         }

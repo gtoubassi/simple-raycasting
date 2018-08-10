@@ -32,8 +32,6 @@ public class Screen {
 
         contentXOffset = container.getWidth() - WIDTH;
         contentYOffset = container.getHeight() - HEIGHT;
-
-
     }
 
     public void zeroFill() {
@@ -42,8 +40,7 @@ public class Screen {
 
     public void flush() {
         Graphics2D g = (Graphics2D) strategy.getDrawGraphics();
-        g.translate(contentXOffset, contentYOffset);
-        g.drawImage(image, 0, 0, null);
+        g.drawImage(image, contentXOffset, contentYOffset, null);
 
         // finally, we've completed drawing so clear up the graphics
         // and flip the buffer over

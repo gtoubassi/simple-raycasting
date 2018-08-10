@@ -3,15 +3,16 @@
 This repo represents a simple, Java based ray casting implementation similar
 to those used in early "3D" games like Wolfenstein 3D.
 
+You can toggle between textured and "flat" (gray) walls with the 'T' key.
 
 ![raycasting recording](https://github.com/gtoubassi/simple-raycasting/blob/master/raycastdemo.gif?raw=true)
 
 ### Speed
 
 Being in Java is a bit silly but it turns out the actual ray casting is still
-plenty fast clocking in at ~6500 fps on my 1.7Ghz core i7 Macbook Air.
-This easily should have been able to run 60 fps on hardware of that era
-(386 @33Mhz).
+plenty fast clocking in at ~6500 fps for flat walls and ~2500 fps for
+textured on my 1.7Ghz core i7 Macbook Air.  Even the textured should be fast
+enough to run on hardware from the Wolfenstein 3D era.
 
 I do have a huge tax in Java due to garbage collection though given that the
 ray caster doesn't actually turn over garbage I assume by choosing the right
@@ -54,6 +55,12 @@ I'm not doing an actual DDA to intersect rays with walls. I'm just marching
 detect an intersection "late".  Thus when you get close to the wall you can
 see some jaggies at the top and bottom.  I really should be marching the ray
 and calculating intersections at both the vertical and horizontal grid lines.
+
+When the player gets too close to a wall and the wall intersects the plane of
+the camera it distorts (flattens) against the camera plane.  Its not readily
+obvious to me if this is a bug or if I just need to tune everything so the
+camera plane and field of view and how close you can get to a wall
+conveniently avoids the issue.
 
 ### Ideas
 
